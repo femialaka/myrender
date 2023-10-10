@@ -1,1 +1,0 @@
-Task 2.16 to 2.17 / Phonebook step 11 to step 12

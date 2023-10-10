@@ -21,20 +21,8 @@ app.use(
   )
 )
 
-const allowedOrigins = ['http://localhost:5173', 'https://domain2.com', 'https://domain3.com'];
-
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Check if the origin of the incoming request is in the allowedOrigins array
-    if (allowedOrigins.includes(origin) || !origin) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-};
-
-app.use(cors(corsOptions))
+const cors = require('cors')
+app.use(cors())
 app.use(express.json())
 //app.use(morgan('tiny'))
 
@@ -141,7 +129,7 @@ app.post("/api/persons", (request, response) => {
   response.json(person)
 })
 
-const PORT = 3001
+const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
-});
+})
