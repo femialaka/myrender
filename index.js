@@ -1,8 +1,9 @@
-const express = require("express")
+const express = require('express')
 const app = express()
 const morgan = require('morgan')
 const cors = require('cors')
-		
+
+app.use(cors())
 morgan.token('post-data', (req, res) => {
   if (req.method === 'POST' && req.body) {
     return JSON.stringify(req.body)
@@ -21,10 +22,9 @@ app.use(
   )
 )
 
-app.use(cors())
 app.use(express.json())
 app.use(express.static('dist'))
-//app.use(morgan('tiny'))
+
 
 let persons = [
   {
@@ -52,17 +52,60 @@ let persons = [
     number: "13-56-7879224",
     id: 5,
   },
-]
+];
 
-const generateId = () => {
-  const maxId = persons.length > 0 ? Math.max(...persons.map((n) => n.id)) : 0
-  return maxId + 1
-}
+const generateId = () => Math.ceil(Math.random() * 90000000)
 
+app.get("/api/persons/:id", (req, res) => {
+  const id = Number(req.params.id);
+  const person = persons.find((person) => person.id === id);
+  if (person) {
+    res.json(person);
+    //res.send(`<p>Phone: ${person.number}</p>`)
+  } else {
+    //res.send(`<p>404 Phone Number not found</p>`)
+    res.status(404).end()
+  }
+});
+
+app.get("/", (req, res) => {
+  res.send(`<h3>Phonebook api</h3>`)
+})
+app.get("/info", (req, res) => {
+  res.send(`<p>Phonebook has info for ${persons.length} people</p>
+  <p>${Date()}</p>`)
+});
+
+app.get("/api/persons", (req, res) => {
+  res.json(persons)
+});
+
+app.delete("/api/persons/:id", (req, res) => {
+  const id = Number(req.params.id)
+  const person = persons.find((person) => person.id === id)
+  if (person) {
+    persons = persons.filter(person => person.id !== id)
+    res.status(204).end()
+  } else {
+    res.status(404).end()
+  }
+});
 
 app.post("/api/persons", (request, response) => {
-  const body = request.body
-  const nameExists = persons.find((person) => person.name.toLowerCase() === body.name.toLowerCase())
+  const person = request.body
+
+  if (!person.name) {
+    return response.status(400).json({
+      error: "name missing",
+    })
+  }
+  if (!person.number) {
+    return response.status(400).json({
+      error: "phone number missing",
+    })
+  }
+
+  const nameExists = persons.find((p) => p.name.toLowerCase() === person.name.toLowerCase())
 
   console.log(nameExists)
 
@@ -72,20 +115,9 @@ app.post("/api/persons", (request, response) => {
     })
   }
 
-  if (!body.name) {
-    return response.status(400).json({
-      error: "name missing",
-    })
-  }
-  if (!body.number) {
-    return response.status(400).json({
-      error: "phone number missing",
-    })
-  }
-
   const personAdded = {
-    name: body.name,
-    number: body.number,
+    name: person.name,
+    number: person.number,
     id: generateId(),
   }
 
@@ -94,42 +126,7 @@ app.post("/api/persons", (request, response) => {
   response.json(persons)
 })
 
-app.get("/api/persons", (req, res) => {
-  res.json(persons)
-})
-
-app.get("/info", (req, res) => {
-  res.send(
-    `<p>Phonebook has info for ${
-      persons.length
-    } people</p><p>${Date().toString()}</p>`
-  )
-})
-
-app.get("/api/persons/:id", (request, response) => {
-  const id = Number(request.params.id);
-  const person = persons.find((person) => person.id === id)
-  if (person) {
-    response.json(person)
-  } else {
-    response.status(404).end()
-  }
-})
-
-app.delete("/api/person/:id", (request, response) => {
-  const id = Number(request.params.id)
-  persons = persons.filter((person) => person.id !== id)
-
-  response.status(204).end()
-})
-
-app.post("/api/persons", (request, response) => {
-  const person = request.body
-  console.log(person)
-  response.json(person)
-})
-
 const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
-})
+});
